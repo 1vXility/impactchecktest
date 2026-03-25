@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IMPACT 2026 Check-in</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    :root { --purple:#6b2fcc; --blue:#2563d8; --dark:#0c091f; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--dark); font-family:'Inter',sans-serif; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:1.5rem 1rem 3rem; }
+
+    /* ── Lock screen ── */
+    #lockScreen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:80vh; width:100%; max-width:380px; }
+    .lock-brand { font-family:'Montserrat',sans-serif; font-size:2.8rem; font-weight:900; background:linear-gradient(135deg,#60a5fa,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:0.05em; margin-bottom:0.3rem; }
+    .lock-sub { font-family:'Montserrat',sans-serif; font-size:0.58rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:2.5rem; text-align:center; }
+    .lock-box { background:#16132e; border:1px solid rgba(107,47,204,0.25); border-radius:20px; padding:2rem; width:100%; }
+    .lock-title { font-family:'Montserrat',sans-serif; font-size:0.65rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:#a78bfa; margin-bottom:1.2rem; text-align:center; }
+    .lock-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(107,47,204,0.3); border-radius:10px; padding:0.9rem 1rem; color:#fff; font-family:'Inter',sans-serif; font-size:1rem; letter-spacing:0.1em; outline:none; text-align:center; margin-bottom:0.8rem; }
+    .lock-input:focus { border-color:#6b2fcc; }
+    .lock-btn { width:100%; background:linear-gradient(135deg,#2563d8,#6b2fcc); border:none; border-radius:10px; padding:0.9rem; color:#fff; font-family:'Montserrat',sans-serif; font-size:0.88rem; font-weight:800; cursor:pointer; letter-spacing:0.05em; }
+    .lock-btn:active { opacity:0.85; }
+    .lock-error { text-align:center; font-size:0.8rem; color:#f87171; margin-top:0.6rem; min-height:1.2rem; }
+
+    /* ── Main app ── */
+    #mainApp { display:none; width:100%; align-items:center; flex-direction:column; }
+    .header { text-align:center; margin-bottom:1.5rem; }
+    .brand { font-family:'Montserrat',sans-serif; font-size:2.2rem; font-weight:900; background:linear-gradient(135deg,#60a5fa,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:0.05em; }
+    .brand-sub { font-family:'Montserrat',sans-serif; font-size:0.58rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-top:0.2rem; }
+    .badge { display:inline-block; margin-top:0.6rem; background:rgba(107,47,204,0.25); border:1px solid rgba(107,47,204,0.4); border-radius:50px; padding:0.28rem 1rem; font-family:'Montserrat',sans-serif; font-size:0.62rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#a78bfa; }
+
+    .stats-row { display:flex; gap:0.8rem; width:100%; max-width:480px; margin-bottom:1.2rem; }
+    .stat-box { flex:1; background:#16132e; border:1px solid rgba(107,47,204,0.2); border-radius:14px; padding:1rem; text-align:center; }
+    .stat-num { font-family:'Montserrat',sans-serif; font-size:1.8rem; font-weight:900; color:#a78bfa; }
+    .stat-lbl { font-family:'Montserrat',sans-serif; font-size:0.52rem; font-weight:800; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.28); margin-top:0.2rem; }
+
+    .result-card { width:100%; max-width:480px; border-radius:18px; padding:1.3rem 1.5rem; margin-bottom:1.2rem; display:none; }
+    .result-card.success { background:rgba(34,197,94,0.1); border:1.5px solid rgba(34,197,94,0.35); }
+    .result-card.error   { background:rgba(239,68,68,0.1);  border:1.5px solid rgba(239,68,68,0.35); }
+    .result-card.warning { background:rgba(251,191,36,0.1); border:1.5px solid rgba(251,191,36,0.35); }
+    .result-status { font-family:'Montserrat',sans-serif; font-size:0.75rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:0.4rem; }
+    .result-card.success .result-status { color:#4ade80; }
+    .result-card.error   .result-status { color:#f87171; }
+    .result-card.warning .result-status { color:#fbbf24; }
+    .result-name { font-family:'Montserrat',sans-serif; font-size:1.4rem; font-weight:900; color:#fff; margin-bottom:0.7rem; }
+    .result-chips { display:flex; gap:0.6rem; flex-wrap:wrap; }
+    .rc { background:rgba(255,255,255,0.07); border-radius:8px; padding:0.5rem 0.8rem; text-align:center; }
+    .rc-lbl { font-family:'Montserrat',sans-serif; font-size:0.52rem; font-weight:800; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.32); margin-bottom:0.2rem; }
+    .rc-val { font-family:'Montserrat',sans-serif; font-size:0.88rem; font-weight:700; color:#fff; }
+
+    .card { width:100%; max-width:480px; background:#16132e; border:1px solid rgba(107,47,204,0.2); border-radius:18px; overflow:hidden; margin-bottom:1.2rem; }
+    .card-hdr { padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.05); }
+    .card-title { font-family:'Montserrat',sans-serif; font-size:0.62rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:#a78bfa; }
+    #reader { width:100%; background:#000; }
+    #reader video { width:100% !important; }
+
+    .manual-sec { padding:1.1rem 1.3rem; }
+    .manual-lbl { font-family:'Montserrat',sans-serif; font-size:0.58rem; font-weight:800; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:0.5rem; }
+    .input-row { display:flex; gap:0.6rem; }
+    .m-input { flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(107,47,204,0.3); border-radius:10px; padding:0.75rem 1rem; color:#fff; font-family:'Inter',sans-serif; font-size:0.88rem; outline:none; }
+    .m-input:focus { border-color:#6b2fcc; }
+    .sub-btn { background:linear-gradient(135deg,#2563d8,#6b2fcc); border:none; border-radius:10px; padding:0.75rem 1.1rem; color:#fff; font-family:'Montserrat',sans-serif; font-size:0.78rem; font-weight:800; cursor:pointer; white-space:nowrap; }
+    .sub-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+    .log-card { width:100%; max-width:480px; background:#16132e; border:1px solid rgba(107,47,204,0.2); border-radius:18px; overflow:hidden; }
+    .log-hdr { padding:1rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; }
+    .log-title { font-family:'Montserrat',sans-serif; font-size:0.62rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:#a78bfa; }
+    .log-count { font-family:'Montserrat',sans-serif; font-size:0.62rem; font-weight:700; color:rgba(255,255,255,0.28); }
+    .log-list { padding:0.4rem 0; max-height:260px; overflow-y:auto; }
+    .log-item { display:flex; align-items:center; gap:0.7rem; padding:0.65rem 1.3rem; border-bottom:1px solid rgba(255,255,255,0.03); }
+    .log-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:#4ade80; }
+    .log-dot.warn { background:#fbbf24; }
+    .log-name { font-size:0.85rem; font-weight:500; color:#fff; flex:1; }
+    .log-seat { font-size:0.72rem; color:rgba(255,255,255,0.32); }
+    .log-time { font-size:0.68rem; color:rgba(255,255,255,0.22); }
+    .log-empty { padding:2rem; text-align:center; font-size:0.82rem; color:rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+
+  <!-- LOCK SCREEN -->
+  <div id="lockScreen">
+    <div class="lock-brand">IMPACT</div>
+    <div class="lock-sub">Registration Check-in · Team Access Only</div>
+    <div class="lock-box">
+      <div class="lock-title">Enter Team Password</div>
+      <input class="lock-input" type="password" id="pwdInput" placeholder="Password" />
+      <button class="lock-btn" onclick="tryUnlock()">Unlock Check-in</button>
+      <div class="lock-error" id="lockError"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp">
+    <div class="header">
+      <div class="brand">IMPACT</div>
+      <div class="brand-sub">Innovation of Medicine, Pharmacy & Clinical Therapeutics</div>
+      <div class="badge">Registration Check-in · March 29, 2026</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num" id="cntIn">0</div><div class="stat-lbl">Checked In</div></div>
+      <div class="stat-box"><div class="stat-num" id="cntDup">0</div><div class="stat-lbl">Duplicates</div></div>
+      <div class="stat-box"><div class="stat-num" id="cntErr">0</div><div class="stat-lbl">Not Found</div></div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-status" id="resultStatus"></div>
+      <div class="result-name" id="resultName"></div>
+      <div class="result-chips" id="resultChips"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">Scan Attendee QR Code</div></div>
+      <div id="reader"></div>
+      <div class="manual-sec">
+        <div class="manual-lbl">Or enter manually</div>
+        <div class="input-row">
+          <input class="m-input" id="manualInput" placeholder="NAME:Ahmed Ali|ID:230438" />
+          <button class="sub-btn" id="manualBtn" onclick="submitManual()">Check In</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-card">
+      <div class="log-hdr">
+        <div class="log-title">Recent Check-ins</div>
+        <div class="log-count" id="logCount">0 entries</div>
+      </div>
+      <div class="log-list" id="logList">
+        <div class="log-empty">No check-ins yet today.</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  var isProcessing = false;
+  var lastScanned = '';
+  var lastScannedTime = 0;
+  var cntIn = 0, cntDup = 0, cntErr = 0;
+
+  // ── Password unlock ──
+  function tryUnlock() {
+    var pwd = document.getElementById('pwdInput').value.trim();
+    google.script.run
+      .withSuccessHandler(function(ok) {
+        if (ok) {
+          document.getElementById('lockScreen').style.display = 'none';
+          var app = document.getElementById('mainApp');
+          app.style.display = 'flex';
+          startScanner();
+        } else {
+          document.getElementById('lockError').textContent = 'Wrong password. Try again.';
+          document.getElementById('pwdInput').value = '';
+        }
+      })
+      .verifyPassword(pwd);
+  }
+
+  document.getElementById('pwdInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') tryUnlock();
+  });
+
+  // ── QR Scanner ──
+  function startScanner() {
+    var html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      function(decodedText) {
+        var now = Date.now();
+        if (decodedText === lastScanned && now - lastScannedTime < 4000) return;
+        lastScanned = decodedText;
+        lastScannedTime = now;
+        processCheckin(decodedText);
+      },
+      function() {}
+    ).catch(function(err) { console.warn('Camera error:', err); });
+  }
+
+  function submitManual() {
+    var val = document.getElementById('manualInput').value.trim();
+    if (!val) return;
+    processCheckin(val);
+    document.getElementById('manualInput').value = '';
+  }
+
+  function processCheckin(qrData) {
+    if (isProcessing) return;
+    isProcessing = true;
+    document.getElementById('manualBtn').disabled = true;
+    showResult('', 'Processing...', '', []);
+
+    google.script.run
+      .withSuccessHandler(handleResult)
+      .withFailureHandler(function(err) {
+        showResult('error', 'Server Error', err.message, []);
+        isProcessing = false;
+        document.getElementById('manualBtn').disabled = false;
+      })
+      .checkInAttendee(qrData);
+  }
+
+  function handleResult(res) {
+    isProcessing = false;
+    document.getElementById('manualBtn').disabled = false;
+
+    if (res.success) {
+      showResult('success', 'Checked In', res.name, [
+        {l:'Block', v:res.block}, {l:'Row', v:res.row}, {l:'ID', v:res.id}
+      ]);
+      addLog(res.name, res.block, res.row, false);
+      cntIn++;
+      document.getElementById('cntIn').textContent = cntIn;
+
+    } else if (res.alreadyCheckedIn) {
+      showResult('warning', 'Already Checked In', res.name, [
+        {l:'Block', v:res.block}, {l:'Row', v:res.row}
+      ]);
+      addLog(res.name, res.block, res.row, true);
+      cntDup++;
+      document.getElementById('cntDup').textContent = cntDup;
+
+    } else {
+      showResult('error', 'Not Found', res.message, []);
+      cntErr++;
+      document.getElementById('cntErr').textContent = cntErr;
+    }
+
+    setTimeout(function() {
+      document.getElementById('resultCard').style.display = 'none';
+    }, 5000);
+  }
+
+  function showResult(type, status, name, chips) {
+    var card = document.getElementById('resultCard');
+    card.className = 'result-card ' + type;
+    card.style.display = 'block';
+    document.getElementById('resultStatus').textContent = status;
+    document.getElementById('resultName').textContent = name;
+    document.getElementById('resultChips').innerHTML = chips.map(function(c) {
+      return '<div class="rc"><div class="rc-lbl">' + c.l + '</div><div class="rc-val">' + c.v + '</div></div>';
+    }).join('');
+  }
+
+  function addLog(name, block, row, isDup) {
+    var list = document.getElementById('logList');
+    var empty = list.querySelector('.log-empty');
+    if (empty) empty.remove();
+    var now = new Date().toLocaleTimeString('en-EG', {hour:'2-digit', minute:'2-digit'});
+    var item = document.createElement('div');
+    item.className = 'log-item';
+    item.innerHTML =
+      '<div class="log-dot' + (isDup ? ' warn' : '') + '"></div>' +
+      '<div class="log-name">' + name + '</div>' +
+      '<div class="log-seat">Block ' + block + ' · Row ' + row + '</div>' +
+      '<div class="log-time">' + now + '</div>';
+    list.insertBefore(item, list.firstChild);
+    var count = list.querySelectorAll('.log-item').length;
+    document.getElementById('logCount').textContent = count + (count === 1 ? ' entry' : ' entries');
+  }
+
+  document.getElementById('manualInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') submitManual();
+  });
+</script>
+</body>
+</html>
